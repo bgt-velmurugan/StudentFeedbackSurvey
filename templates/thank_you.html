@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-center">
+    <h1 class="text-4xl font-bold mb-8">Thank You for Your Feedback!</h1>
+    <p class="text-xl mb-8">Your input is valuable and will help us improve our services.</p>
+    <a href="{{ url_for('index') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        Return to Home
+    </a>
+</div>
+{% endblock %}
+

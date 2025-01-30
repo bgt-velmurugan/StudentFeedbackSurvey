@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-8">Sentiment Analysis</h1>
+<div class="grid grid-cols-2 gap-4 mb-8">
+    <div>
+        <label for="department" class="block text-sm font-medium text-gray-700">Department</label>
+        <select id="department" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            <option value="cs">Computer Science</option>
+            <option value="ee">Electrical Engineering</option>
+            <option value="me">Mechanical Engineering</option>
+        </select>
+    </div>
+    <div>
+        <label for="year" class="block text-sm font-medium text-gray-700">Year</label>
+        <select id="year" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            <option value="1">Year 1</option>
+            <option value="2">Year 2</option>
+            <option value="3">Year 3</option>
+            <option value="4">Year 4</option>
+        </select>
+    </div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+    <div>
+        <canvas id="lineChart"></canvas>
+    </div>
+    <div>
+        <canvas id="pieChart"></canvas>
+    </div>
+</div>
+<div class="mt-8">
+    <button id="exportBtn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+        Export Results as PDF
+    </button>
+</div>
+<script>
+    const departmentSelect = document.getElementById('department');
+    const yearSelect = document.getElementById('year');
+    const exportBtn = document.getElementById('exportBtn');
+    let lineChart, pieChart;
+
+    function fetchSentimentData() {
+        const department = departmentSelect.value;
+        const year = yearSelect.value;
+        fetch(`/api/sentiment?department=${department}&year=${year}`)
+            .then(response => response.json())
+            .then(data => {
+                updateCharts(data);
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    function updateCharts(data) {
+        const categories = ['Courses', 'Faculty', 'Facilities'];
+        const positiveData = categories.map(cat => data[cat.toLowerCase()].positive);
+        const neutralData = categories.map(cat => data[cat.toLowerCase()].neutral);
+        const negativeData = categories.map(cat => data[cat.toLowerCase()].negative);
+
+        if (lineChart) lineChart.destroy();
+        if (pieChart) pieChart.destroy();
+
+        lineChart = new Chart(document.getElementById('lineChart'), {
+            type: 'line',
+            data: {
+                labels: categories,
+                datasets: [
+                    {
+                        label: 'Positive',
+                        data: positiveData,
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Neutral',
+                        data: neutralData,
+                        borderColor: 'rgb(255, 205, 86)',
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Negative',
+                        data: negativeData,
+                        borderColor: 'rgb(255, 99, 132)',
+                        tension: 0.1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Sentiment Analysis'
+                    }
+                }
+            }
+        });
+
+        const totalSentiment = positiveData.reduce((a, b) => a + b, 0) + 
+                               neutralData.reduce((a, b) => a + b, 0) + 
+                               negativeData.reduce((a, b) => a + b, 0);
+
+        pieChart = new Chart(document.getElementById('pieChart'), {
+            type: 'pie',
+            data: {
+                labels: ['Positive', 'Neutral', 'Negative'],
+                datasets: [{
+                    data: [
+                        positiveData.reduce((a, b) => a + b, 0),
+                        neutralData.reduce((a, b) => a + b, 0),
+                        negativeData.reduce((a, b) => a + b, 0)
+                    ],
+                    backgroundColor: [
+                        'rgb(75, 192, 192)',
+                        'rgb(255, 205, 86)',
+                        'rgb(255, 99, 132)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Overall Sentiment Distribution'
+                    }
+                }
+            }
+        });
+    }
+
+    departmentSelect.addEventListener('change', fetchSentimentData);
+    yearSelect.addEventListener('change', fetchSentimentData);
+    exportBtn.addEventListener('click', () => {
+        const department = departmentSelect.value;
+        const year = yearSelect.value;
+        window.location.href = `/export_sentiment?department=${department}&year=${year}`;
+    });
+
+    // Initial fetch
+    fetchSentimentData();
+</script>
+{% endblock %}
+

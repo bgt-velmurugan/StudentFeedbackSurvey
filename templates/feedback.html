@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-8">Provide Feedback</h1>
+<form method="POST" class="space-y-8">
+    {{ form.csrf_token }}
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            {{ form.department.label(class="block text-sm font-medium text-gray-700") }}
+            {{ form.department(class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm") }}
+        </div>
+        <div>
+            {{ form.year.label(class="block text-sm font-medium text-gray-700") }}
+            {{ form.year(class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm") }}
+        </div>
+    </div>
+    {% for section, questions in [('Courses', form.course_ratings), ('Faculty', form.faculty_ratings), ('Facilities', form.facility_ratings)] %}
+        <div class="space-y-4">
+            <h2 class="text-2xl font-semibold">{{ section }}</h2>
+            {% for i in range(5) %}
+                <div class="space-y-2">
+                    <p>Question {{ i + 1 }}</p>
+                    <div class="flex space-x-2 star-rating" data-rating-name="{{ questions[i].name }}">
+                        {% for star in range(6) %}
+                            <input type="radio" id="{{ section.lower() }}_{{ i }}_{{ star }}" name="{{ questions[i].name }}" value="{{ star }}" class="hidden peer" required>
+                            <label for="{{ section.lower() }}_{{ i }}_{{ star }}" class="cursor-pointer text-2xl text-gray-300">★</label>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        Submit Feedback
+    </button>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const starRatings = document.querySelectorAll('.star-rating');
+    
+    starRatings.forEach(rating => {
+        const stars = rating.querySelectorAll('label');
+        const ratingName = rating.dataset.ratingName;
+        
+        stars.forEach((star, index) => {
+            star.addEventListener('click', () => {
+                stars.forEach((s, i) => {
+                    if (i <= index) {
+                        s.classList.add('text-yellow-400');
+                        s.classList.remove('text-gray-300');
+                    } else {
+                        s.classList.remove('text-yellow-400');
+                        s.classList.add('text-gray-300');
+                    }
+                });
+                document.querySelector(`input[name="${ratingName}"][value="${index}"]`).checked = true;
+            });
+        });
+    });
+});
+</script>
+{% endblock %}
+
